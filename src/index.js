@@ -9,7 +9,7 @@ import registerServiceWorker from './registerServiceWorker';
 
 console.log(neo4j)
 
-const driver = neo4j.driver("bolt://localhost:11037", neo4j.auth.basic("neo4j", "neo4j"));
+const driver = neo4j.driver("bolt://localhost:7687", neo4j.auth.basic("neo4j", "neo4j"));
 
 const Root = () => (
   <App driver={driver}/>
