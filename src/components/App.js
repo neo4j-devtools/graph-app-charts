@@ -1,21 +1,17 @@
-import React, { Component } from 'react';
+import React, { Component, useState } from 'react';
 import logo from '../logo.svg';
 import '../App.css';
 
 import PersonList from './PersonList'
 import PersonSearch from "./PersonSearch";
+import {useReadCypher} from 'use-neo4j';
 
-class App extends Component {
+export default function App() {
 
-  constructor(props) {
-    super(props);
-    this.state = {
-      name: 'All',
-      people: [],
-    }
-  }
+  const [name, setName] = useState('All');
+  const [people, setPeople] = useState([]);
 
-  setSearchTerm = (name) => {
+  const setSearchTerm = (name) => {
     name = name || null
     const query = `
      MATCH (p:Person)-->(m:Movie) WHERE {name} is null OR toLower(p.name) contains toLower($name)
@@ -24,24 +20,16 @@ class App extends Component {
 	            coStaffCount: sum(size((m)<--())-1),
                 movies: collect(m {.title, .released,.tagline, staff: [(m)<--(st) | st.name]}) } as person limit 15;
     `
-//    console.log(this.props, name)
-    const session = this.props.driver.session();
-    session.run(query, {name}).then((result) => {
-       this.setState({name:name, people:result.records.map((r)=>{ var p=r.get('person'); console.log(p); return p;})});
-       session.close();
-    })
+    const {loading, error, records} = useReadCypher(query);
+    setName(name);
+    if (records) {
+      setPeople(records.map((r)=>{ var p=r.get('person'); console.log(p); return p;}));
+    }
   };
-
-
-  render() {
-    const {name,people} = this.state;
-    return (
-      <div>
-        <PersonSearch setSearchTerm={this.setSearchTerm} name={name}/>
-        <PersonList people={people}/>
-      </div>
+  return (
+    <div>
+      <PersonSearch setSearchTerm={setSearchTerm} title={name}/>
+      <PersonList people={people}/>
+    </div>
     )
-  }
 }
-
-export default App;
